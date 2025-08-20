@@ -1,0 +1,57 @@
+* ==============================================================
+* Task 2 - NPN BJT Overvoltage Protection Circuit
+* Protects load from input voltages above 12V using NPN transistor
+* ==============================================================
+
+* Circuit Parameters
+.param VZENER=12        ; Zener breakdown voltage (protection threshold)
+.param RLOAD=1k         ; Load resistance (represents protected circuit)
+.param RBIAS=10k        ; Base bias resistor
+.param RSERIES=100      ; Series limiting resistor
+
+* Input voltage source - swept from 0V to 20V
+VIN     VIN   0    DC 0
+
+* NPN BJT Models
+.model  NPN_2N2222 NPN(BF=100 VA=100 IS=1e-14 BR=5 CJC=8p CJE=25p TF=0.5n TR=35n)
+
+* Zener Diode Model
+.model  ZENER_12V D(BV=12 IBV=1m RS=10 CJO=50p)
+
+* -------------------- NPN Overvoltage Protection Circuit --------------------
+* Series pass configuration with zener regulation
+
+* Zener diode for voltage reference (CORRECTED)
+DZ1     0      N1     ZENER_12V      ; 12V Zener diode (anode to ground)
+R1      VIN    N1     {RBIAS}        ; Bias resistor to zener
+
+* NPN transistor as series pass regulator
+Q1      VIN    N1     VOUT   NPN_2N2222   ; NPN: Collector=Input, Base=Zener, Emitter=Output
+RB1     N1     VOUT   10k                  ; Base-emitter bias resistor
+
+* Load (represents the circuit being protected)
+RLOAD1  VOUT   0      {RLOAD}        ; 1k load resistor
+
+* Current measurement probes (simplified)
+VIM_OUT VOUT   VOUT_M 0               ; Output current measurement
+
+* -------------------- Simulation Setup --------------------
+* DC sweep of input voltage from 0V to 20V
+.dc VIN 0 20 0.1
+
+* AC analysis for frequency response (optional)
+*.ac dec 10 1 1MEG
+
+* -------------------- Measurements --------------------
+.meas DC VOUT_AT_15V FIND V(VOUT_M) WHEN V(VIN)=15
+.meas DC VOUT_AT_18V FIND V(VOUT_M) WHEN V(VIN)=18
+
+* -------------------- Key Signals to Plot --------------------
+* Essential plots for analysis:
+*   V(VIN)                ; Input voltage (swept variable)
+*   V(VOUT_M)             ; Protected output voltage
+*   V(N1)                 ; Zener/base voltage
+*   I(VIM_OUT)            ; Output current to load
+*   I(Q1)                 ; Transistor current
+*   V(VIN,VOUT_M)         ; Voltage drop across transistor
+

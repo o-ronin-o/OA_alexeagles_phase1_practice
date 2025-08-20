@@ -1,0 +1,52 @@
+* ==============================================================
+* Task 2 - PNP BJT Overvoltage Protection Circuit
+* Protects load from input voltages above 12V using PNP shunt clamp
+* ==============================================================
+
+* Circuit Parameters
+.param RLOAD=1k         ; Load resistance (represents protected circuit)
+.param RSER=100         ; Input series resistor
+.param RBIAS=10k        ; Base bias resistor
+
+* Input voltage source - swept from 0V to 20V
+VIN     VIN   0    DC 0
+
+* PNP BJT Model
+.model  PNP_2N2907 PNP(BF=100 VA=100 IS=1e-14 BR=5 CJC=8p CJE=25p TF=0.5n TR=35n)
+
+* Zener Diode Model
+.model  ZENER_12V D(BV=12 IBV=1m RS=10 CJO=50p)
+
+* -------------------- PNP Overvoltage Protection Circuit --------------------
+* Shunt clamp configuration (gradual protection)
+
+* Input series resistor and current probe
+RS      VIN   VPRE   {RSER}           ; Input series resistor
+VPROBE  VPRE  VOUT   0                ; Current measurement probe
+
+* Protected load
+RLOAD   VOUT  0      {RLOAD}          ; 1k load resistor
+
+* PNP shunt clamp with zener control
+RB      VOUT  NB     {RBIAS}          ; Bias to zener sense
+DZ1     0     NB     ZENER_12V        ; 12V reference to ground
+QSHUNT  VOUT  NB     0    PNP_2N2907  ; PNP shunt: Emitter=VOUT, Base=NB, Collector=0
+
+* -------------------- Simulation Setup --------------------
+* DC sweep of input voltage from 0V to 20V
+.dc VIN 0 20 0.1
+
+* -------------------- Measurements --------------------
+.meas DC VOUT_AT_15V FIND V(VOUT) WHEN V(VIN)=15
+.meas DC VOUT_AT_18V FIND V(VOUT) WHEN V(VIN)=18
+.meas DC VOUT_AT_20V FIND V(VOUT) WHEN V(VIN)=20
+.meas DC ILOAD_20V   FIND I(VPROBE) WHEN V(VIN)=20
+
+* -------------------- Key Signals to Plot --------------------
+* Essential plots for analysis:
+*   V(VIN)                ; Input voltage (swept variable)
+*   V(VOUT)               ; Protected output voltage
+*   V(NB)                 ; Zener/base control voltage
+*   I(VPROBE)             ; Load current
+*   I(QSHUNT)             ; PNP shunt current
+*   V(VPRE)               ; Voltage before series resistor

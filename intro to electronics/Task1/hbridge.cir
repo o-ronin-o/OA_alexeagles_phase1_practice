@@ -1,0 +1,59 @@
+* =============================================================
+* H-Bridge Motor Driver (Modified Netlist)
+* Functionality identical to original, but with different naming
+* =============================================================
+
+* -------- Parameters ---------
+.param SUPPLY_V=12
+.param GDRV_V=12
+.param PWM_FREQ=20k
+.param DUTY_CYCLE=0.5
+.param RSENSE=0.1
+.param MODE_SEL=4      ; 1=Forward, 2=Reverse, 3=Brake, 4=Coast
+
+.param PERIOD = {1/PWM_FREQ}
+.param T_ON   = {DUTY_CYCLE*PERIOD}
+
+* -------- Voltage Source & Shunt ---------
+VSUP     N_VCC   0     {SUPPLY_V}
+RSENSE1  N_GND   0     {RSENSE}
+C_BULK   N_VCC   N_GND 220u Rser=0.05
+
+* -------- MOSFET Power Device Model ---------
+.model MOS_DRV VDMOS VTO=2.8 Rg=2 Rd=12m Rs=5m Rb=1m
++ Cgdmax=1n Cgdmin=100p Cgs=3n Cds=0.2n Vds=40 Ron=12m 
++ Qg=30n Qgs=8n Qgd=8n mfg=ALTGENERIC
+
+* --------- H-Bridge Configuration ---------
+* Left branch
+M_Q1    N_VCC   N_G1   N_A   N_A   MOS_DRV
+RG_Q1   N_DRV1  N_G1   5
+RPD_Q1  N_G1    N_A    100k
+
+M_Q2    N_A     N_G2   N_GND N_GND MOS_DRV
+RG_Q2   N_DRV2  N_G2   5
+RPD_Q2  N_G2    N_GND  100k
+
+* Right branch
+M_Q3    N_VCC   N_G3   N_B   N_B   MOS_DRV
+RG_Q3   N_DRV3  N_G3   5
+RPD_Q3  N_G3    N_B    100k
+
+M_Q4    N_B     N_G4   N_GND N_GND MOS_DRV
+RG_Q4   N_DRV4  N_G4   5
+RPD_Q4  N_G4    N_GND  100k
+
+* -------- Driver Logic ---------
+* (Kept same equations, only node renames)
+VDRV1   N_DRV1  0   PULSE(0 {GDRV_V} 0 50n 50n {T_ON} {PERIOD})
+VDRV2   N_DRV2  0   0
+VDRV3   N_DRV3  0   0
+VDRV4   N_DRV4  0   0
+
+* Output Nodes
+.alias PHASE_A N_A
+.alias PHASE_B N_B
+
+* =============================================================
+* End of Modified Netlist
+* =============================================================
