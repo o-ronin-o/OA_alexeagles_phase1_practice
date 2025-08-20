@@ -1,1 +1,3 @@
-print("ana 3amalt conflict")
+def conflict():
+
+    print("meow meow")
