@@ -1,1 +1,1 @@
-print("ana conflict")
+print("ana 3amalt conflict")
